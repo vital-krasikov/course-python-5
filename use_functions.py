@@ -28,8 +28,13 @@
 
 4. выход
 выход из программы
-
 """
+
+
+def add_purchase(history, account, name, s):
+    history.append((name, s))
+    account -= s
+    return history, account
 
 
 def my_account():
@@ -50,8 +55,7 @@ def my_account():
             s = int(input('Введите сумму покупки: '))
             if s <= account:
                 name = input('Введите название товара: ')
-                history.append((name, s))
-                account -= s
+                history, account = add_purchase(history, account, name, s)
             else:
                 print('Не хватает средств на счете для покупки!')
         elif choice == '3':
@@ -61,3 +65,7 @@ def my_account():
             break
         else:
             print('Неверный пункт меню')
+
+
+if __name__ == "__main__":
+    my_account()
