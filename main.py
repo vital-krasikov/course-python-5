@@ -18,7 +18,8 @@ def print_menu():
     print('9. Игра Викторина')
     print('10. Программа Мой банковский счет')
     print('11. Смена рабочей директории')
-    print('12. Выход')
+    print('12. Сохранить содержимое рабочей директории в файл')
+    print('13. Выход')
 
     return None
 
@@ -27,9 +28,26 @@ def author_info():
     return 'Создатель программы: Красиков Виталий Александрович, в рамках задания на курсе Python+'
 
 
+def save_current_dir(file_name):
+    """
+    сохранение данных о содержимом текущей директории в текстовый файл
+    :param file_name: имя файла
+    :return:
+    """
+    f = open(file_name, 'w')
+    files = 'files: '
+    dirs = 'dirs: '
+    for item in os.scandir():
+        if item.is_file():
+            files += item.name + '; '
+        else:
+            dirs += item.name + '; '
+    f.write(files+'\n'+dirs)
+
+
 def main():
     option = 1
-    while option != 12:
+    while option != 13:
 
         print_menu()
 
@@ -71,6 +89,8 @@ def main():
                 use_functions.my_account()
             elif option == 11:
                 os.chdir(input('Введите путь к новой рабочей папке: '))
+            elif option == 12:
+                save_current_dir('listdir.txt')
         except ValueError:
             print('Введено не число! Попробуйте еще раз')
         except OSError:
