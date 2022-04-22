@@ -37,6 +37,21 @@ import json
 SAVE_OPTIONS = {1: 'txt', 2: 'pickle', 3: 'json'}
 
 
+def counter(func):
+    """
+    Декоратор, считающий и выводящий количество вызовов
+    декорируемой функции.
+    """
+    def wrapper(*args, **kwargs):
+        wrapper.count += 1
+        res = func(*args, **kwargs)
+        print("{0} была вызвана: {1}x".format(func.__name__, wrapper.count))
+        return res
+    wrapper.count = 0
+    return wrapper
+
+
+@counter
 def save_settings(account_settings, history_settings=None):
     """
     Функция сохранения настроек сохранения в файл
@@ -46,14 +61,11 @@ def save_settings(account_settings, history_settings=None):
     :return:
     """
     f = open('settings', 'w')
-    if history_settings is None:
-        f.write('1'+str(account_settings))
-    else:
-        f.write('2'+str(account_settings)+str(history_settings))
-
+    f.write('1'+str(account_settings) if history_settings is None else '2'+str(account_settings)+str(history_settings))
     f.close()
 
 
+@counter
 def load_settings():
     """
     Функция загрузки настроек сохранения из файла
@@ -75,12 +87,11 @@ def load_settings():
         except ValueError:
             history_settings = 1
     f.close()
-    if n == 2:
-        return account_settings, history_settings
-    else:
-        return account_settings, None
+
+    return (account_settings, history_settings) if n == 2 else (account_settings, None)
 
 
+@counter
 def save_account(account, f, file_type):
     """
     Функция сохранения данных счета в файл
@@ -97,6 +108,7 @@ def save_account(account, f, file_type):
         json.dump({'account': account}, f)
 
 
+@counter
 def load_account(f, file_type):
     """
      Функция загрузки данных счета из файла
@@ -113,6 +125,7 @@ def load_account(f, file_type):
     return account
 
 
+@counter
 def save_history(history, f, file_type):
     """
      Функция сохранения истории покупок в файл
@@ -130,6 +143,7 @@ def save_history(history, f, file_type):
         json.dump({'history': history}, f)
 
 
+@counter
 def load_history(f, file_type):
     """
      Функция загрузки истории продаж из файла
@@ -153,6 +167,7 @@ def load_history(f, file_type):
     return history
 
 
+@counter
 def save_account_history(account, history, f, file_type):
     """
     Функция сохранения сразу счета и истории покупок в файл
@@ -171,6 +186,7 @@ def save_account_history(account, history, f, file_type):
         save_history(history, f, file_type)
 
 
+@counter
 def load_account_history(f, file_type):
     """
     Функция сохранения сразу счета и истории покупок в файл
@@ -187,27 +203,24 @@ def load_account_history(f, file_type):
         return load_account(f, file_type), load_history(f, file_type)
 
 
+@counter
 def add_purchase(history, account, name, s):
     history.append([name, s])
     account -= s
     return history, account
 
 
+@counter
 def my_account():
 
     history = []
 
     account_settings, history_settings = load_settings()
-    if history_settings is None:
-        different_files = False
-    else:
-        different_files = True
+    different_files = (False if history_settings is None else True)
 
     if different_files:
         try:
-            mode = 'r'
-            if account_settings == 2:
-                mode += 'b'
+            mode = ('rb' if account_settings == 2 else 'r')
             f = open('account_data.'+SAVE_OPTIONS[account_settings], mode)
         except OSError:
             print('файл счета не найден! количество денег на счету равно 0')
@@ -220,9 +233,7 @@ def my_account():
                 account = 0
 
         try:
-            mode = 'r'
-            if history_settings == 2:
-                mode += 'b'
+            mode = ('rb' if history_settings == 2 else 'r')
             f = open('history_data.'+SAVE_OPTIONS[history_settings], mode)
         except OSError:
             print('файл истории покупок не найден! история покупок пуста')
@@ -235,9 +246,7 @@ def my_account():
                 history = []
     else:
         try:
-            mode = 'r'
-            if account_settings == 2:
-                mode += 'b'
+            mode = ('rb' if account_settings == 2 else 'r')
             f = open('data.'+SAVE_OPTIONS[account_settings], mode)
         except OSError:
             print('файл счета не найден! количество денег на счету равно 0')
@@ -267,19 +276,14 @@ def my_account():
                 different_files = True
             account_settings = 0
             while account_settings not in (1, 2, 3):
-                if different_files:
-                    print('Выберите вариант сохранения данных счета:')
-                else:
-                    print('Выберите вариант сохранения данных:')
+                print('Выберите вариант сохранения данных счета:' if different_files else 'Выберите вариант сохранения данных:')
                 print('1. текст\n2. pickle\n3. json')
                 try:
                     account_settings = int(input())
                 except ValueError:
                     account_settings = 0
-                if account_settings not in (1, 2, 3):
-                    print('Выберите вариант от 1 до 3!')
-                else:
-                    print('Данные будут сохранены в формате '+SAVE_OPTIONS[account_settings]+'!')
+                print('Выберите вариант от 1 до 3!' if account_settings not in (1, 2, 3)
+                      else 'Данные будут сохранены в формате '+SAVE_OPTIONS[account_settings]+'!')
 
             if different_files:
                 history_settings = 0
@@ -290,10 +294,8 @@ def my_account():
                         history_settings = int(input())
                     except ValueError:
                         history_settings = 0
-                    if history_settings not in (1, 2, 3):
-                        print('Выберите вариант от 1 до 3!')
-                    else:
-                        print('Данные будут сохранены в формате ' + SAVE_OPTIONS[history_settings] + '!')
+                    print('Выберите вариант от 1 до 3!' if history_settings not in (1, 2, 3)
+                          else 'Данные будут сохранены в формате ' + SAVE_OPTIONS[history_settings] + '!')
                 save_settings(account_settings, history_settings)
             else:
                 save_settings(account_settings)
@@ -311,25 +313,19 @@ def my_account():
                 print(i[0]+': '+str(i[1]))
         elif choice == '4':
             if different_files:
-                mode = 'w'
-                if account_settings == 2:
-                    mode += 'b'
+                mode = ('wb' if account_settings == 2 else 'w')
 
                 f = open('account_data.'+SAVE_OPTIONS[account_settings], mode)
                 save_account(account, f, account_settings)
                 f.close()
 
-                mode = 'w'
-                if history_settings == 2:
-                    mode += 'b'
+                mode = ('wb' if history_settings == 2 else 'w')
 
                 f = open('history_data.'+SAVE_OPTIONS[history_settings], mode)
                 save_history(history, f, history_settings)
                 f.close()
             else:
-                mode = 'w'
-                if account_settings == 2:
-                    mode += 'b'
+                mode = ('wb' if account_settings == 2 else 'w')
 
                 f = open('data.'+SAVE_OPTIONS[account_settings], mode)
                 save_account_history(account, history, f, account_settings)
